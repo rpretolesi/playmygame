@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -15,6 +16,13 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	private static final String TAG = MainGamePanel.class.getSimpleName();
 	private MainThread thread;
 	private Droid droid;
+	private ElaineAnimated elaine;
+	
+	// the fps to be displayed
+	private String avgFps;
+	public void setAvgFps(String avgFps) {
+		this.avgFps = avgFps;
+	}
 	
 	public MainGamePanel(Context context) {
 		super(context);
@@ -24,7 +32,16 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		// create droid and load bitmap 
 		droid = new Droid(BitmapFactory.decodeResource(getResources(), R.drawable.droid_1), 50, 50); 
 		
-		// create the game loop thread 
+		
+
+        // create Elaine and load bitmap 
+        elaine = new ElaineAnimated( 
+        BitmapFactory.decodeResource(getResources(), R.drawable.walk_elaine)
+                , 10, 50    // initial position 
+                , 30, 47    // width and height of sprite 
+                , 5, 5);    // FPS and number of frames in the animation 
+
+        // create the game loop thread 
 		thread = new MainThread(getHolder(), this);
 
 		setFocusable(true); 
@@ -107,6 +124,11 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	{ 
 		canvas.drawColor(Color.BLACK); 
 		droid.draw(canvas); 
+		
+		elaine.draw(canvas);
+		// display fps
+		displayFps(canvas, avgFps);
+		
 	} 
 
 
@@ -137,6 +159,16 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
 		// Update the lone droid 
 		droid.update(); 
+		
+		// Update the Elain 
+		elaine.update(System.currentTimeMillis());
 	} 
-
+	
+	private void displayFps(Canvas canvas, String fps) {
+		if (canvas != null && fps != null) {
+			Paint paint = new Paint();
+			paint.setARGB(255, 255, 255, 255);
+			canvas.drawText(fps, this.getWidth() - 50, 20, paint);
+		}
+	}
 }
