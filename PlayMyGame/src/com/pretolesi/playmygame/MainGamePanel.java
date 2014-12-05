@@ -1,4 +1,6 @@
 package com.pretolesi.playmygame;
+import com.pretolesi.playmygame.droid.Droid;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
@@ -13,11 +15,14 @@ import android.view.SurfaceView;
 
 public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback  
 {
+	
 	private static final String TAG = MainGamePanel.class.getSimpleName();
 	private MainThread thread;
 	private Droid droid;
 	private ElaineAnimated elaine;
-	
+	private Explosion explosion;
+	private static final int EXPLOSION_SIZE = 200;
+
 	// the fps to be displayed
 	private String avgFps;
 	public void setAvgFps(String avgFps) {
@@ -31,11 +36,10 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
 		// create droid and load bitmap 
 		droid = new Droid(BitmapFactory.decodeResource(getResources(), R.drawable.droid_1), 50, 50); 
-		
-		
 
         // create Elaine and load bitmap 
         elaine = new ElaineAnimated( 
+
         BitmapFactory.decodeResource(getResources(), R.drawable.walk_elaine)
                 , 10, 50    // initial position 
                 , 30, 47    // width and height of sprite 
@@ -117,6 +121,14 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 			} 
 		} 
 
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			// handle touch
+			// check if explosion is null or if it is still active
+			if (explosion == null || explosion.getState() == Explosion.STATE_DEAD) {
+				explosion = new Explosion(EXPLOSION_SIZE, (int)event.getX(), (int)event.getY());
+			}
+		}
+
 		return true;
 	} 
 
@@ -126,6 +138,22 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		droid.draw(canvas); 
 		
 		elaine.draw(canvas);
+		
+		// render explosions
+		if (explosion != null) {
+			explosion.draw(canvas);
+		}
+
+		// display border
+		Paint paint = new Paint();
+		paint.setColor(Color.GREEN);
+		canvas.drawLines(new float[]{
+				0,0, canvas.getWidth()-1,0, 
+				canvas.getWidth()-1,0, canvas.getWidth()-1,canvas.getHeight()-1, 
+				canvas.getWidth()-1,canvas.getHeight()-1, 0,canvas.getHeight()-1,
+				0,canvas.getHeight()-1, 0,0
+		}, paint);
+		
 		// display fps
 		displayFps(canvas, avgFps);
 		
@@ -162,6 +190,12 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		
 		// Update the Elain 
 		elaine.update(System.currentTimeMillis());
+
+		// update explosions
+		if (explosion != null && explosion.isAlive()) {
+			explosion.update(getHolder().getSurfaceFrame());
+		}
+		
 	} 
 	
 	private void displayFps(Canvas canvas, String fps) {
@@ -171,4 +205,5 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 			canvas.drawText(fps, this.getWidth() - 50, 20, paint);
 		}
 	}
+	
 }
